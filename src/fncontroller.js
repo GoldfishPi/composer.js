@@ -10,8 +10,8 @@
             let value = initial_value;
             let subscriptions = [];
             const set_value = new_value => {
-                subscriptions.forEach(cb => cb(value));
                 value = new_value;
+                subscriptions.forEach(cb => cb(new_value));
             }
 
             const curr_fn = function() {
@@ -25,12 +25,12 @@
             return [ curr_fn, set_value ]
         }
 
-        const watch = (watchers) => {
-            for(let key in watchers) {
-                watchers[key].subscribe(() => {
-                });
-            }
+        const use_effect = (cb, states) => {
+            states.forEach(state => {
+                state.subscribe(cb);
+            });
         }
+
 
         let sub_controllers = [];
         const sub = (tag, controller) => {
@@ -80,8 +80,8 @@
             el, 
             setup,
             use_state, 
-            watch, 
-            release 
+            use_effect,
+            release,
         };
 
         let controller_html = '';
