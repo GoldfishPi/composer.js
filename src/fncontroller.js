@@ -40,32 +40,34 @@
 
         const release = () => {
 
-            events.forEach(({ tag, cb }) => {
+            events().forEach(({ tag, cb }) => {
 				const match = tag.match(/^(\w+)\s*(.*)$/);
 				const evname = match[1].trim();
 				const selector = match[2].trim();
                 Composer.remove_event(el(), evname, cb, selector);
             });
 
-            sub_controllers.forEach(({ controller }) => {
+            sub_controllers().forEach(({ controller }) => {
                 controller.release();
             });
 
             el().parentNode.removeChild(el());
         }
 
-        const controller_options = { 
+        const controller_options = observable({ 
             sub, 
             event, 
             element, 
             el, 
             setup,
             release,
-        };
+        });
 
 
         const init = () => {
-            controller_html(controller(controller_options));
+            controller_html(
+                controller(controller_options())
+            );
             const created = document.createElement(tag())
             el(created);
             setup_fn();
@@ -101,10 +103,12 @@
         }
 
         return (options) => {
-            controller_options = {
-                ...controller_options,
+
+            controller_options({
+                ...controller_options(),
                 ...options
-            }
+            });
+
             return {
                 inject,
                 release,
