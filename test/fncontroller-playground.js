@@ -37,12 +37,16 @@ const Main = Composer.FnController(({ sub, event, release, data, setup, element 
     });
 
     sub('.inject-target', TestSub({
-        hello:'erik',
         props: {
-            count,
             text
         }
     }));
+
+    sub('.inject-target-2', TestSub({
+        props: {
+            text
+        }
+    }))
 
     sub('.normal-subcontroller', new NormalController({
     }))
@@ -59,19 +63,20 @@ const Main = Composer.FnController(({ sub, event, release, data, setup, element 
         } else {
             toggle('on')
         }
-    })
+    });
+
+    event('keyup input', (e) => text(e.target.value));
 
     setup(() => {
-        console.log('el_text', el_text);
         el_text().value = text();
     })
 
-    event('keyup input', (e) => text(e.target.value));
 
     return `
         <h1>Hello World</h1>
         <div>
             <div class="inject-target"></div>
+            <div class="inject-target-2"></div>
             <div class="normal-subcontroller"></div>
         </div>
         <h2>Goodbye world</h2>
@@ -84,6 +89,6 @@ const Main = Composer.FnController(({ sub, event, release, data, setup, element 
 })
 
 window.addEventListener('DOMContentLoaded', () => {
-    console.log('starting')
+    console.log('starting', Main)
     Main().inject('#app');
 })
