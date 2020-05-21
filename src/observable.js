@@ -15,3 +15,7 @@ function observable(value) {
     }
     return accessor;
 }
+
+function watch_many(listener, observables) {
+    observables.forEach(observable.subscribe(listener));
+}

@@ -9,6 +9,7 @@
         const events = observable([]);
         const elements = observable([]);
         const setup_fn = observable(() => {});
+        const controller_html = observable('');
 
         const sub = (tag, controller) => {
             sub_controllers([
@@ -53,7 +54,7 @@
             el().parentNode.removeChild(el());
         }
 
-        let controller_options = { 
+        const controller_options = { 
             sub, 
             event, 
             element, 
@@ -62,10 +63,9 @@
             release,
         };
 
-        let controller_html = '';
 
         const init = () => {
-            controller_html = controller(controller_options);
+            controller_html(controller(controller_options));
             const created = document.createElement(tag())
             el(created);
             setup_fn();
@@ -73,7 +73,7 @@
 
 
         const render = () => {
-            el().innerHTML = controller_html;
+            el().innerHTML = controller_html();
 
             sub_controllers().forEach(({ tag, controller }) => {
                 el().querySelector(tag)
