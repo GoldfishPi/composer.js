@@ -15,6 +15,13 @@ const TestSub = Composer.FnController(({ data, event, props }) => {
         <button>++ subcontroller count</button>
     `
 })
+
+const NormalController = Composer.Controller.extend({
+    init:function() {
+        this.html('<h1>Normal Controller</h1>')
+    }
+});
+
 const Main = Composer.FnController(({ sub, event, release, data, setup, element }) => {
 
     const count = observable(0)
@@ -36,6 +43,9 @@ const Main = Composer.FnController(({ sub, event, release, data, setup, element 
             text
         }
     }));
+
+    sub('.normal-subcontroller', new NormalController({
+    }))
 
     event('click .amazing-button', () => {
         count(count() + 1);
@@ -60,7 +70,10 @@ const Main = Composer.FnController(({ sub, event, release, data, setup, element 
 
     return `
         <h1>Hello World</h1>
+        <div>
             <div class="inject-target"></div>
+            <div class="normal-subcontroller"></div>
+        </div>
         <h2>Goodbye world</h2>
         <p>My data test { count}</p>
         <button class="amazing-button">Click me!</button>

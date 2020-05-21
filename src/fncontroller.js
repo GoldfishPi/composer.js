@@ -111,7 +111,10 @@
 
         const append_subcontrollers = () => {
             sub_controllers().forEach(({ tag, controller }) => {
-                if(controller.active()) {
+                if(controller.active === undefined) {
+                    el().querySelector(tag)
+                        .appendChild(controller.el);
+                }else if(controller.active()) {
                     el().querySelector(tag)
                         .appendChild(controller.el());
                 } else {
