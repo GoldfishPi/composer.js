@@ -4,12 +4,16 @@
 (function() {
     const FnController = controller => {
 
+        const el = observable(null); 
+        const active = observable(false);
+
         const tag = observable('div');
         const sub_controllers = observable([]);
         const events = observable([]);
         const elements = observable([]);
         const setup_fn = observable(() => {});
         const controller_html = observable('');
+        const bound_data = observable({});
 
         const sub = (tag, controller) => {
             sub_controllers([
@@ -35,8 +39,9 @@
             return element;
         }
 
+        const data = (bindings) => bound_data(bindings);
+
         const setup = (fn) => setup_fn(fn);        
-        const el = observable(null); 
 
         const release = () => {
 
@@ -61,6 +66,7 @@
             el, 
             setup,
             release,
+            data,
         });
 
 
@@ -73,15 +79,17 @@
             setup_fn();
         }
 
-
         const render = () => {
-            el().innerHTML = controller_html();
+            const html = observable(controller_html());
+            for(const key in bound_data()) {
+                const new_html = html().replace(/{.*}/, bound_data()[key]());
+                html(new_html);
+            }
+            el().innerHTML = html();
+            append_subcontrollers();
+        }
 
-            sub_controllers().forEach(({ tag, controller }) => {
-                el().querySelector(tag)
-                    .appendChild(controller.inject());
-            })
-
+        const bind = () => {
             events().forEach(({ tag, cb }) => {
 				const match = tag.match(/^(\w+)\s*(.*)$/);
 				const evname = match[1].trim();
@@ -92,13 +100,31 @@
             elements().forEach(({ tag, element }) => {
                 element(Composer.find(el(), tag));
             });
+
+            for(let key in bound_data()) {
+                bound_data()[key].subscribe(() => render());
+            }
+        }
+
+        const append_subcontrollers = () => {
+            sub_controllers().forEach(({ tag, controller }) => {
+                if(controller.active()) {
+                    el().querySelector(tag)
+                        .appendChild(controller.el());
+                } else {
+                    el().querySelector(tag)
+                        .appendChild(controller.inject());
+                }
+            })
         }
 
         const inject = (inject_tag) => {
             init();
             render();
+            bind();
             const element = Composer.find(document, inject_tag);
             if(element) element.appendChild(el());
+            active(true);
             return el();
         }
 
@@ -110,8 +136,10 @@
             });
 
             return {
+                el,
                 inject,
                 release,
+                active,
             }
         };
     }
