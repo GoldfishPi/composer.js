@@ -12,8 +12,10 @@
         const events = observable([]);
         const elements = observable([]);
         const setup_fn = observable(() => {});
-        const controller_html = observable('');
         const bound_data = observable({});
+
+        const controller_html = observable('');
+        const previous_render = observable('');
 
         const sub = (tag, controller) => {
             sub_controllers([
@@ -31,11 +33,8 @@
             const element = observable(null)
             elements([
                 ...elements(),
-                { 
-                    tag,
-                    element
-                }
-            ])
+                { tag, element }
+            ]);
             return element;
         }
 
@@ -82,9 +81,13 @@
         const render = () => {
             const html = observable(controller_html());
             for(const key in bound_data()) {
-                const new_html = html().replace(/{.*}/, bound_data()[key]());
+                const regex = new RegExp(`{\\s*${key}\\s*}`, 'g');
+                const new_html = html().replace(regex, bound_data()[key]());
                 html(new_html);
             }
+
+            if(html() === previous_render())return;
+            previous_render(html());
             el().innerHTML = html();
             append_subcontrollers();
         }
@@ -145,3 +148,4 @@
     }
     Composer.exp0rt({ FnController })
 }).apply((typeof exports != 'undefined') ? exports : this);
+

@@ -1,13 +1,16 @@
-const TestSub = Composer.FnController(({ data, event }) => {
+const TestSub = Composer.FnController(({ data, event, props }) => {
+    const { text } = props;
     const count = observable(0);
 
     data({
-        count
+        count,
+        text,
     });
 
     event('click button', () => count(count() + 1));
 
     return `
+        <p>my text { text }</p>
         <p> I am a sub controller, my count is { count }</p>
         <button>++ subcontroller count</button>
     `
@@ -16,16 +19,19 @@ const Main = Composer.FnController(({ sub, event, release, data }) => {
 
     const count = observable(0)
     const toggle = observable('off');
+    const text = observable('lol');
 
     data({
         count,
-        toggle
+        toggle,
+        text
     });
 
     sub('.inject-target', TestSub({
         hello:'erik',
         props: {
-            count
+            count,
+            text
         }
     }));
 
@@ -43,14 +49,17 @@ const Main = Composer.FnController(({ sub, event, release, data }) => {
         }
     })
 
+    event('keyup input', (e) => text(e.target.value));
+
     return `
         <h1>Hello World</h1>
             <div class="inject-target"></div>
         <h2>Goodbye world</h2>
-        <p>My data test { count }</p>
+        <p>My data test { count}</p>
         <button class="amazing-button">Click me!</button>
         <button class="release">Rlease me</button>
         <button class="toggle">{ toggle }</button>
+        <input type="text">
     `
 })
 
