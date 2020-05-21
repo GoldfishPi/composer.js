@@ -128,6 +128,7 @@
             const element = Composer.find(document, inject_tag);
             if(element) element.appendChild(el());
             active(true);
+            setup_fn()();
             return el();
         }
 

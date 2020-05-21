@@ -15,11 +15,13 @@ const TestSub = Composer.FnController(({ data, event, props }) => {
         <button>++ subcontroller count</button>
     `
 })
-const Main = Composer.FnController(({ sub, event, release, data }) => {
+const Main = Composer.FnController(({ sub, event, release, data, setup, element }) => {
 
     const count = observable(0)
     const toggle = observable('off');
     const text = observable('lol');
+
+    const el_text = element('input');
 
     data({
         count,
@@ -47,6 +49,11 @@ const Main = Composer.FnController(({ sub, event, release, data }) => {
         } else {
             toggle('on')
         }
+    })
+
+    setup(() => {
+        console.log('el_text', el_text);
+        el_text().value = text();
     })
 
     event('keyup input', (e) => text(e.target.value));
