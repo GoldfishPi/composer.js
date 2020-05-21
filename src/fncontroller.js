@@ -4,58 +4,38 @@
 (function() {
     const FnController = controller => {
 
-        const tag = 'div';
+        const tag = observable('div');
+        const sub_controllers = observable([]);
+        const events = observable([]);
+        const elements = observable([]);
+        const setup_fn = observable(() => {});
 
-        const use_state = (initial_value = null) => {
-            let value = initial_value;
-            let subscriptions = [];
-            const set_value = new_value => {
-                value = new_value;
-                subscriptions.forEach(cb => cb(new_value));
-            }
-
-            const curr_fn = function() {
-                return value;
-            }
-
-            curr_fn.subscribe = (cb) => {
-                subscriptions.push(cb);
-            }
-
-            return [ curr_fn, set_value ]
-        }
-
-        const use_effect = (cb, states) => {
-            states.forEach(state => {
-                state.subscribe(cb);
-            });
-        }
-
-
-        let sub_controllers = [];
         const sub = (tag, controller) => {
-            sub_controllers.push({ tag, controller });
+            sub_controllers([
+                ...sub_controllers(),
+                { tag, controller }
+            ])
         }
 
-        let events = [];
+        const event = (tag, cb) => events([
+            ...events(),
+            { tag, cb }
+        ])
 
-        const event = (tag, cb) => {
-            events.push({ tag, cb })
-        }
-
-        let elements = [];
         const element = (tag) => {
-            const [ element, set_element ] = use_state(null);
-            elements.push({ tag, set_element });
+            const element = observable(null)
+            elements([
+                ...elements(),
+                { 
+                    tag,
+                    element
+                }
+            ])
             return element;
         }
 
-        let setup_fn = () => {};
-        const setup = (fn) => {
-            setup_fn = fn;
-        }
-        
-        let [el, set_el] = use_state(null);
+        const setup = (fn) => setup_fn(fn);        
+        const el = observable(null); 
 
         const release = () => {
 
@@ -79,36 +59,36 @@
             element, 
             el, 
             setup,
-            use_state, 
-            use_effect,
             release,
         };
 
         let controller_html = '';
+
         const init = () => {
             controller_html = controller(controller_options);
-            set_el(document.createElement(tag));
+            const created = document.createElement(tag())
+            el(created);
             setup_fn();
         }
 
 
         const render = () => {
             el().innerHTML = controller_html;
-            for(let sub_controller of sub_controllers) {
-                const target = el().querySelector(sub_controller.tag)
-                const sub_element = sub_controller.controller.inject();
-                target.appendChild(sub_element);
-            }
 
-            events.forEach(({ tag, cb }) => {
+            sub_controllers().forEach(({ tag, controller }) => {
+                el().querySelector(tag)
+                    .appendChild(controller.inject());
+            })
+
+            events().forEach(({ tag, cb }) => {
 				const match = tag.match(/^(\w+)\s*(.*)$/);
 				const evname = match[1].trim();
 				const selector = match[2].trim();
                 Composer.add_event(el(), evname, cb, selector);
             })
 
-            elements.forEach(({ tag, set_element }) => {
-                set_element(Composer.find(el(), tag));
+            elements().forEach(({ tag, element }) => {
+                element(Composer.find(el(), tag));
             });
         }
 
