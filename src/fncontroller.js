@@ -3,7 +3,7 @@
  */
 (function() {
     const FnController = (controller) => {
-        const create_controller = (options) => {
+        const create_controller = (options = {}) => {
 
             const el = observable(null); 
             const active = observable(false);
@@ -68,7 +68,13 @@
                 setup,
                 release,
                 data,
-                ...options
+                tag,
+                props: {
+                    ...options.props
+                },
+                slots: {
+                    ...options.slots
+                }
             });
 
 
@@ -92,7 +98,7 @@
                 if(html() === previous_render())return;
                 previous_render(html());
                 el().innerHTML = html();
-                append_subcontrollers();
+                if(active()) append_subcontrollers();
             }
 
             const bind = () => {
@@ -131,6 +137,7 @@
                 init();
                 render();
                 bind();
+                append_subcontrollers();
                 const element = Composer.find(document, inject_tag);
                 if(element) element.appendChild(el());
                 active(true);
@@ -138,6 +145,9 @@
                 return el();
             }
 
+            if(options.inject) {
+                inject(options.inject);
+            }
 
             return {
                 el,

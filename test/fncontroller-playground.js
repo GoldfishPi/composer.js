@@ -1,20 +1,35 @@
-const TestSub = Composer.FnController(({ data, event, props }) => {
+
+const TestSub = Composer.FnController(({ element, event, props, setup }) => {
     const { text } = props;
     const count = observable(0);
 
-    data({
-        count,
-        text,
-    });
+    const el_text = element('.my-text');
+    const el_count = element('.my-count');
+
+    text.subscribe(value => el_text().innerHTML = value);
+    count.subscribe(value => el_count().innerHTML = value);
 
     event('click button', () => count(count() + 1));
 
+    setup(() => {
+        el_text().innerHTML = text();
+        el_count().innerHTML = count();
+    });
+
     return `
-        <p>my text { text }</p>
-        <p> I am a sub controller, my count is { count }</p>
+        <p>my text: <span class="my-text"></span></p>
+        <p> I am a sub controller, my count is <span class="my-count"></span></p>
         <button>++ subcontroller count</button>
+        <div class="content"></div>
     `
-})
+});
+
+const Main = Composer.FnController(({ sub }) => {
+    sub('div', TestSub());
+    return `
+        <div></div>
+    `
+});
 
 const NormalController = Composer.Controller.extend({
     init:function() {
@@ -22,37 +37,52 @@ const NormalController = Composer.Controller.extend({
     }
 });
 
-const Main = Composer.FnController(({ sub, event, release, data, setup, element }) => {
+const SlotsTest = Composer.FnController(({ event, props }) => {
+    event('click h1', props.on_click);
+    return `
+        <h1>slots work!</h1>
+    `
+});
+
+
+const DiffrentEl = Composer.FnController(({ tag }) => {
+    tag('ul');
+    return `
+        <li>Hello I am a list item</li>
+    `
+});
+
+const Main = Composer.FnController(({ sub, event, release, setup, element }) => {
 
     const count = observable(0)
     const toggle = observable('off');
     const text = observable('lol');
 
     const el_text = element('input');
-
-    data({
-        count,
-        toggle,
-        text
-    });
+    const el_count = element('.my-count');
+    const el_toggle = element('.toggle')
 
     sub('.inject-target', TestSub({
         props: {
             text
+        },
+        slots: {
+            content:SlotsTest({
+                props: {
+                    on_click:() => console.log('event passing works too!')
+                }
+            })
         }
     }));
 
-    sub('.inject-target-2', TestSub({
-        props: {
-            text
-        }
+    sub('.inject-normal', new NormalController({
     }))
 
-    sub('.normal-subcontroller', new NormalController({
-    }))
+    sub('.inject-el', DiffrentEl());
 
     event('click .amazing-button', () => {
         count(count() + 1);
+        el_count().innerHTML = count();
     });
 
     event('click .release', () => release());
@@ -63,13 +93,14 @@ const Main = Composer.FnController(({ sub, event, release, data, setup, element 
         } else {
             toggle('on')
         }
+        el_toggle().innerHTML = toggle();
     });
 
     event('keyup input', (e) => text(e.target.value));
 
     setup(() => {
         el_text().value = text();
-    })
+    });
 
 
     return `
@@ -77,18 +108,20 @@ const Main = Composer.FnController(({ sub, event, release, data, setup, element 
         <div>
             <div class="inject-target"></div>
             <div class="inject-target-2"></div>
-            <div class="normal-subcontroller"></div>
+            <div class="inject-normal"></div>
+            <div class="inject-el"></div>
         </div>
         <h2>Goodbye world</h2>
-        <p>My data test { count}</p>
+        <p>My data test <span class="my-count">0</span></p>
         <button class="amazing-button">Click me!</button>
         <button class="release">Rlease me</button>
-        <button class="toggle">{ toggle }</button>
+        <button class="toggle">off</button>
         <input type="text">
     `
-})
+});
 
 window.addEventListener('DOMContentLoaded', () => {
-    console.log('starting', Main)
-    Main().inject('#app');
+    console.log('starting');
+    Main({ inject:'#app' });
 })
+
