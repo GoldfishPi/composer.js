@@ -18,7 +18,7 @@
             const sub_controllers = observable([]);
 
             // -- keeps track of bound element events
-            const events = observable([]);
+            const element_events = observable([]);
 
             // -- keeps track of element refs
             const elements = observable([]);
@@ -63,8 +63,8 @@
                 return current_controller;
             }
 
-            const bind_element_event = (tag, cb) => events([
-                ...events(),
+            const bind_element_event = (tag, cb) => element_events([
+                ...element_events(),
                 { tag, cb }
             ])
 
@@ -88,7 +88,7 @@
 
                 if(!active()) return;
 
-                events().forEach(({ tag, cb }) => {
+                element_events().forEach(({ tag, cb }) => {
                     const match = tag.match(/^(\w+)\s*(.*)$/);
                     const evname = match[1].trim();
                     const selector = match[2].trim();
@@ -149,7 +149,7 @@
                 el().innerHTML = html;
 
                 // -- bind events
-                events().forEach(({ tag, cb }) => {
+                element_events().forEach(({ tag, cb }) => {
                     const match = tag.match(/^(\w+)\s*(.*)$/);
                     const evname = match[1].trim();
                     const selector = match[2].trim();
