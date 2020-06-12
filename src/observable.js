@@ -10,9 +10,15 @@ function observable(value) {
         }
         return value;
     }
+
     accessor.subscribe = function(listener) {
-        listeners.push(listener);
+        return listeners.push(listener) - 1;
     }
+
+    accessor.unsubscribe = function(listener_index) {
+        listeners = listeners.filter((_, i) => i != listener_index);
+    }
+
     return accessor;
 }
 

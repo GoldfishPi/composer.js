@@ -14,6 +14,7 @@
             const elements = observable([]);
             const setup_fn = observable(() => {});
             const bound_data = observable({});
+            const observable_subscriptions = observable([]);
 
             const controller_html = observable('');
             const previous_render = observable('');
@@ -40,7 +41,10 @@
                 return element;
             }
 
-            const data = (bindings) => bound_data(bindings);
+            const subscribe = (observable, cb) => observable_subscriptions([
+                ...observable_subscriptions(),
+                { observable, index:observable.subscribe(cb) }
+            ]);
 
             const setup = (fn) => setup_fn(fn);        
 
@@ -52,6 +56,9 @@
                     const selector = match[2].trim();
                     Composer.remove_event(el(), evname, cb, selector);
                 });
+
+                observable_subscriptions()
+                    .forEach(({ observable, index }) => observable.unsubscribe(index));
 
                 sub_controllers().forEach(({ controller }) => {
                     controller.release();
@@ -67,8 +74,9 @@
                 el, 
                 setup,
                 release,
-                data,
                 tag,
+                subscribe,
+
                 props: {
                     ...options.props
                 },
