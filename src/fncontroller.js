@@ -14,11 +14,9 @@
             // -- used to change the root element tag
             const tag = observable('div');
 
-            // -- keeps track of sub controllers
-            const sub_controllers = observable([]);
-
-            // -- keeps track of element refs
+            // -- controller set item refs
             const elements = observable([]);
+            const sub_controllers = observable([]);
 
             // -- setup function set by controller
             const setup_fn = observable(() => {});
