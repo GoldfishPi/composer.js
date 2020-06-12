@@ -20,14 +20,14 @@
             // -- keeps track of bound element events
             const events = observable([]);
 
-            // -- keeps track of element refrences
+            // -- keeps track of element refs
             const elements = observable([]);
 
             // -- setup function set by controller
             const setup_fn = observable(() => {});
 
             // -- we have to keep track of observable 
-            // subscptions or you will get orphaned 
+            // subscriptions or you will get orphaned 
             // observable events
             const observable_subscriptions = observable([]);
 
