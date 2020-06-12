@@ -19,7 +19,8 @@ const ListItem = Composer.FnController(({ props, element, setup, tag, event }) =
         </div>
     `
 });
-const ListMain = Composer.FnController(({ event, element, subscribe, sub }) => {
+
+const ListMain = Composer.FnController(({ event, element, sub }) => {
     const items = observable([]);
     const sub_controllers = observable([]);
     const el_text = element('input');
