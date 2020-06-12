@@ -89,6 +89,7 @@
 
                 if(!active()) return;
 
+                // -- Start Cleanup Events
                 element_events().forEach(({ tag, cb }) => {
                     const match = tag.match(/^(\w+)\s*(.*)$/);
                     const evname = match[1].trim();
@@ -108,18 +109,24 @@
                 composer_events().forEach(({ event_obj, name, fn }) => {
                     event_obj.unbind(name, fn);
                 })
+                // -- End cleanup events
 
                 el().parentNode.removeChild(el());
                 active(false);
             }
 
             const append_subcontroller = (tag, controller) => {
+                // -- used for normal controllers
                 if(controller.active === undefined) {
                     el().querySelector(tag)
                         .appendChild(controller.el);
+
+                // -- used for active fn controller that needs to be moved
                 }else if(controller.active()) {
                     el().querySelector(tag)
                         .appendChild(controller.el());
+
+                // -- used for inactive fn controller that needs to be injected
                 } else {
                     el().querySelector(tag)
                         .appendChild(controller.inject());
