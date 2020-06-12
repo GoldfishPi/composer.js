@@ -59,6 +59,7 @@
                 return current_controller;
             }
 
+            // -- Start Event Binding Helpers
             const bind_element_event = (tag, cb) => element_events([
                 ...element_events(),
                 { tag, cb }
@@ -69,6 +70,12 @@
                 { event_obj, fn, event_name, id:event_obj.bind(event_name, fn) }
             ])
 
+            const bind_observable = (observable, cb) => observable_subscriptions([
+                ...observable_subscriptions(),
+                { observable, index:observable.subscribe(cb), cb }
+            ]);
+            // -- End Event Binding Helpers
+
             const make_element_reffrence = (tag) => {
                 const element = observable(null)
                 elements([
@@ -78,10 +85,6 @@
                 return element;
             }
 
-            const bind_observable = (observable, cb) => observable_subscriptions([
-                ...observable_subscriptions(),
-                { observable, index:observable.subscribe(cb), cb }
-            ]);
 
             const release = () => {
 
