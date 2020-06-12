@@ -17,19 +17,17 @@
             // -- keeps track of sub controllers
             const sub_controllers = observable([]);
 
-            // -- keeps track of bound element events
-            const element_events = observable([]);
-
             // -- keeps track of element refs
             const elements = observable([]);
 
             // -- setup function set by controller
             const setup_fn = observable(() => {});
 
-            // -- we have to keep track of observable 
-            // subscriptions or you will get orphaned 
-            // observable events
+            // -- These are all events we have to bind and unbind
+            //    with inject and release
             const observable_subscriptions = observable([]);
+            const element_events = observable([]);
+            const composer_events = observable([]);
 
             const id = observable(Composer.cid());
 
@@ -68,6 +66,11 @@
                 { tag, cb }
             ])
 
+            const bind_composer_event = (event_obj, event_name, fn) => composer_events([
+                ...composer_events(),
+                { event_obj, fn, event_name, id:event_obj.bind(event_name, fn) }
+            ])
+
             const make_element_reffrence = (tag) => {
                 const element = observable(null)
                 elements([
@@ -104,6 +107,10 @@
                     controller().release();
                 });
 
+                composer_events().forEach(({ event_obj, name, fn }) => {
+                    event_obj.unbind(name, fn);
+                })
+
                 el().parentNode.removeChild(el());
                 active(false);
             }
@@ -128,10 +135,12 @@
                     el, 
                     tag,
 
-                    sub:add_subcontroller, 
-                    subscribe:bind_observable,
-                    event:bind_element_event, 
-                    element:make_element_reffrence, 
+                    sub: add_subcontroller, 
+                    element: make_element_reffrence, 
+
+                    event: bind_element_event, 
+                    with_bind: bind_composer_event,
+                    subscribe: bind_observable,
 
                     setup,
                     release,

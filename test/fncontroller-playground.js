@@ -24,6 +24,17 @@ const TestSub = Composer.FnController(({ element, event, props, setup, subscribe
     `
 });
 
+const EventedController = Composer.FnController(({ with_bind, props, element }) => {
+    const event_status = element('span')
+
+    with_bind(props.event_bus, 'update', () => {
+        event_status().innerHTML = 'EVENT TRIGGERED REEEEEEE';
+    })
+    return `
+        <p>event status: <span>no events triggered....</span></p>
+    `
+})
+
 const Main = Composer.FnController(({ sub, event, release, setup, element }) => {
 
     const count = observable(0)
@@ -33,6 +44,14 @@ const Main = Composer.FnController(({ sub, event, release, setup, element }) => 
     const el_text = element('input');
     const el_count = element('.my-count');
     const el_toggle = element('.toggle')
+
+    const event_bus = new Composer.Event();
+
+    sub('.inject-event', EventedController({
+        props: {
+            event_bus
+        }
+    }))
 
     const test_sub = sub('.inject-target');
 
@@ -46,6 +65,10 @@ const Main = Composer.FnController(({ sub, event, release, setup, element }) => 
             },
         }));
     });
+
+    event('click .event-trigger', () => {
+        event_bus.trigger('update');
+    })
 
     event('click .amazing-button', () => {
         count(count() + 1);
@@ -74,8 +97,10 @@ const Main = Composer.FnController(({ sub, event, release, setup, element }) => 
         <h1>Hello World</h1>
         <div>
             <div class="inject-target"></div>
+            <div class="inject-event"></div>
             <button class="release-btn">Rlease Sub Controller</button>
             <button class="inject-btn">Inject Sub Controller</button>
+            <button class="event-trigger">Trigger Composer Event</button>
         </div>
         <h2>Goodbye world</h2>
         <p>My data test <span class="my-count">0</span></p>

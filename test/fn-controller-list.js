@@ -167,9 +167,9 @@ const ListController = Composer.ListController.extend({
         this.add_item();
     }
 });
-window.addEventListener('DOMContentLoaded', () => {
-    console.log('starting lol');
-    ListMain({ inject:'#app' });
-    new ListController({ inject:'#app' })
-})
+// window.addEventListener('DOMContentLoaded', () => {
+//     console.log('starting lol');
+//     ListMain({ inject:'#app' });
+//     new ListController({ inject:'#app' })
+// })
 
