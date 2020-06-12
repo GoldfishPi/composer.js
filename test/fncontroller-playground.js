@@ -34,14 +34,10 @@ const Main = Composer.FnController(({ sub, event, release, setup, element }) => 
     const el_count = element('.my-count');
     const el_toggle = element('.toggle')
 
-    const test_sub = sub('.inject-target', TestSub({
-        props: {
-            text
-        },
-    }));
+    const test_sub = sub('.inject-target');
 
     event('click .release-btn', () => {
-        test_sub().release();
+        if(test_sub()) test_sub().release();
     })
     event('click .inject-btn', () => {
         test_sub(TestSub({

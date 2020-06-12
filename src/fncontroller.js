@@ -33,7 +33,9 @@
                 current_controller
                     .subscribe(controller => {
 
-                        if(previous_controller().active())previous_controller().release();
+                        if(previous_controller() && previous_controller().active()) {
+                            previous_controller().release();
+                        }
 
                         previous_controller(controller);
                         append_subcontroller(tag, controller)
@@ -59,12 +61,14 @@
 
             const subscribe = (observable, cb) => observable_subscriptions([
                 ...observable_subscriptions(),
-                { observable, index:observable.subscribe(cb) }
+                { observable, index:observable.subscribe(cb), cb }
             ]);
 
             const setup = (fn) => setup_fn(fn);        
 
             const release = () => {
+
+                if(!active()) return;
 
                 events().forEach(({ tag, cb }) => {
                     const match = tag.match(/^(\w+)\s*(.*)$/);
@@ -74,7 +78,9 @@
                 });
 
                 observable_subscriptions()
-                    .forEach(({ observable, index }) => observable.unsubscribe(index));
+                    .forEach(({ observable, cb }) => {
+                        observable.unsubscribe(cb)
+                    });
 
                 sub_controllers().forEach(({ controller }) => {
                     controller().release();
@@ -158,7 +164,7 @@
 
             const append_subcontrollers = () => {
                 sub_controllers().forEach(({ tag, controller }) => {
-                    append_subcontroller(tag, controller());
+                    if(controller()) append_subcontroller(tag, controller());
                 })
             }
 

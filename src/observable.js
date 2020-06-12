@@ -12,11 +12,11 @@ function observable(value) {
     }
 
     accessor.subscribe = function(listener) {
-        return listeners.push(listener) - 1;
+        return listeners.push(listener);
     }
 
-    accessor.unsubscribe = function(listener_index) {
-        listeners = listeners.filter((_, i) => i != listener_index);
+    accessor.unsubscribe = function(listener) {
+        listeners = listeners.filter(l => l != listener);
     }
 
     return accessor;
