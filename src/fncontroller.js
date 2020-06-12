@@ -83,8 +83,6 @@
                 { observable, index:observable.subscribe(cb), cb }
             ]);
 
-            const setup = (fn) => setup_fn(fn);        
-
             const release = () => {
 
                 if(!active()) return;
@@ -147,7 +145,7 @@
                     with_bind: bind_composer_event,
                     subscribe: bind_observable,
 
-                    setup,
+                    setup: fn => setup_fn(fn),
                     release,
 
                     props: {
