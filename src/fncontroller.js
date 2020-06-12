@@ -5,22 +5,40 @@
     const FnController = (controller) => {
         const create_controller = (options = {}) => {
 
+            // -- root element populated on inject
             const el = observable(null); 
+
+            // -- flag used to check if a controller has injected
             const active = observable(false);
 
+            // -- used to change the root element tag
             const tag = observable('div');
+
+            // -- keeps track of sub controllers
             const sub_controllers = observable([]);
+
+            // -- keeps track of bound element events
             const events = observable([]);
+
+            // -- keeps track of element refrences
             const elements = observable([]);
+
+            // -- setup function set by controller
             const setup_fn = observable(() => {});
-            const bound_data = observable({});
+
+            // -- we have to keep track of observable 
+            // subscptions or you will get orphaned 
+            // observable events
             const observable_subscriptions = observable([]);
 
-            const controller_html = observable('');
-            const previous_render = observable('');
             const id = observable(Composer.cid());
 
-            const sub = (tag, controller) => {
+            /* -- Logic for adding a sub-controller 
+             * if the sub-controller already exists replace it.
+             * if this is a sub-controller being added on the fly inject it 
+             * otherwise the sub-controller will be added on render
+             */
+            const add_subcontroller = (tag, controller) => {
                 const current_controller = observable(controller)
                 const previous_controller = observable(controller);
                 sub_controllers([
@@ -45,12 +63,12 @@
                 return current_controller;
             }
 
-            const event = (tag, cb) => events([
+            const bind_element_event = (tag, cb) => events([
                 ...events(),
                 { tag, cb }
             ])
 
-            const element = (tag) => {
+            const make_element_reffrence = (tag) => {
                 const element = observable(null)
                 elements([
                     ...elements(),
@@ -59,7 +77,7 @@
                 return element;
             }
 
-            const subscribe = (observable, cb) => observable_subscriptions([
+            const bind_observable = (observable, cb) => observable_subscriptions([
                 ...observable_subscriptions(),
                 { observable, index:observable.subscribe(cb), cb }
             ]);
@@ -90,65 +108,6 @@
                 active(false);
             }
 
-            const controller_options = observable({ 
-                sub, 
-                event, 
-                element, 
-                el, 
-                setup,
-                release,
-                tag,
-                subscribe,
-
-                props: {
-                    ...options.props
-                },
-                slots: {
-                    ...options.slots
-                }
-            });
-
-
-            const init = () => {
-                controller_html(
-                    controller(controller_options())
-                );
-                const created = document.createElement(tag())
-                el(created);
-                setup_fn();
-            }
-
-            const render = () => {
-                const html = observable(controller_html());
-                for(const key in bound_data()) {
-                    const regex = new RegExp(`{\\s*${key}\\s*}`, 'g');
-                    const new_html = html().replace(regex, bound_data()[key]());
-                    html(new_html);
-                }
-
-                if(html() === previous_render())return;
-                previous_render(html());
-                el().innerHTML = html();
-                if(active()) append_subcontrollers();
-            }
-
-            const bind = () => {
-                events().forEach(({ tag, cb }) => {
-                    const match = tag.match(/^(\w+)\s*(.*)$/);
-                    const evname = match[1].trim();
-                    const selector = match[2].trim();
-                    Composer.add_event(el(), evname, cb, selector);
-                })
-
-                elements().forEach(({ tag, element }) => {
-                    element(Composer.find(el(), tag));
-                });
-
-                for(let key in bound_data()) {
-                    bound_data()[key].subscribe(() => render());
-                }
-            }
-
             const append_subcontroller = (tag, controller) => {
                 if(controller.active === undefined) {
                     el().querySelector(tag)
@@ -162,17 +121,50 @@
                 }
             }
 
-            const append_subcontrollers = () => {
+            const inject = (inject_tag) => {
+
+                // -- init
+                const html = controller({
+                    el, 
+                    tag,
+
+                    sub:add_subcontroller, 
+                    subscribe:bind_observable,
+                    event:bind_element_event, 
+                    element:make_element_reffrence, 
+
+                    setup,
+                    release,
+
+                    props: {
+                        ...options.props
+                    },
+                    slots: {
+                        ...options.slots
+                    }
+                });
+
+                el(document.createElement(tag()))
+
+                el().innerHTML = html;
+
+                // -- bind events
+                events().forEach(({ tag, cb }) => {
+                    const match = tag.match(/^(\w+)\s*(.*)$/);
+                    const evname = match[1].trim();
+                    const selector = match[2].trim();
+                    Composer.add_event(el(), evname, cb, selector);
+                })
+
+                elements().forEach(({ tag, element }) => {
+                    element(Composer.find(el(), tag));
+                });
+
+                // -- add sub controllers
                 sub_controllers().forEach(({ tag, controller }) => {
                     if(controller()) append_subcontroller(tag, controller());
-                })
-            }
+                });
 
-            const inject = (inject_tag) => {
-                init();
-                render();
-                bind();
-                append_subcontrollers();
                 const element = Composer.find(document, inject_tag);
                 if(element) element.appendChild(el());
                 active(true);
