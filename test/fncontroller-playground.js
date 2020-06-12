@@ -1,13 +1,13 @@
 
-const TestSub = Composer.FnController(({ element, event, props, setup }) => {
+const TestSub = Composer.FnController(({ element, event, props, setup, subscribe }) => {
     const { text } = props;
     const count = observable(0);
 
     const el_text = element('.my-text');
     const el_count = element('.my-count');
 
-    text.subscribe(value => el_text().innerHTML = value);
-    count.subscribe(value => el_count().innerHTML = value);
+    subscribe(text, value => el_text().innerHTML = value);
+    subscribe(count, value => el_count().innerHTML = value)
 
     event('click button', () => count(count() + 1));
 
@@ -24,34 +24,6 @@ const TestSub = Composer.FnController(({ element, event, props, setup }) => {
     `
 });
 
-const Main = Composer.FnController(({ sub }) => {
-    sub('div', TestSub());
-    return `
-        <div></div>
-    `
-});
-
-const NormalController = Composer.Controller.extend({
-    init:function() {
-        this.html('<h1>Normal Controller</h1>')
-    }
-});
-
-const SlotsTest = Composer.FnController(({ event, props }) => {
-    event('click h1', props.on_click);
-    return `
-        <h1>slots work!</h1>
-    `
-});
-
-
-const DiffrentEl = Composer.FnController(({ tag }) => {
-    tag('ul');
-    return `
-        <li>Hello I am a list item</li>
-    `
-});
-
 const Main = Composer.FnController(({ sub, event, release, setup, element }) => {
 
     const count = observable(0)
@@ -62,23 +34,22 @@ const Main = Composer.FnController(({ sub, event, release, setup, element }) => 
     const el_count = element('.my-count');
     const el_toggle = element('.toggle')
 
-    sub('.inject-target', TestSub({
+    const test_sub = sub('.inject-target', TestSub({
         props: {
             text
         },
-        slots: {
-            content:SlotsTest({
-                props: {
-                    on_click:() => console.log('event passing works too!')
-                }
-            })
-        }
     }));
 
-    sub('.inject-normal', new NormalController({
-    }))
-
-    sub('.inject-el', DiffrentEl());
+    event('click .release-btn', () => {
+        test_sub().release();
+    })
+    event('click .inject-btn', () => {
+        test_sub(TestSub({
+            props: {
+                text
+            },
+        }));
+    });
 
     event('click .amazing-button', () => {
         count(count() + 1);
@@ -107,9 +78,8 @@ const Main = Composer.FnController(({ sub, event, release, setup, element }) => 
         <h1>Hello World</h1>
         <div>
             <div class="inject-target"></div>
-            <div class="inject-target-2"></div>
-            <div class="inject-normal"></div>
-            <div class="inject-el"></div>
+            <button class="release-btn">Rlease Sub Controller</button>
+            <button class="inject-btn">Inject Sub Controller</button>
         </div>
         <h2>Goodbye world</h2>
         <p>My data test <span class="my-count">0</span></p>

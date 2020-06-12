@@ -21,10 +21,26 @@
             const id = observable(Composer.cid());
 
             const sub = (tag, controller) => {
+                const current_controller = observable(controller)
+                const previous_controller = observable(controller);
                 sub_controllers([
                     ...sub_controllers(),
-                    { tag, controller }
+                    { tag, controller:current_controller }
                 ]);
+
+                if(active() && controller) append_subcontroller(tag, controller);
+
+                current_controller
+                    .subscribe(controller => {
+
+                        if(previous_controller().active())previous_controller().release();
+
+                        previous_controller(controller);
+                        append_subcontroller(tag, controller)
+
+                    });
+
+                return current_controller;
             }
 
             const event = (tag, cb) => events([
@@ -61,10 +77,11 @@
                     .forEach(({ observable, index }) => observable.unsubscribe(index));
 
                 sub_controllers().forEach(({ controller }) => {
-                    controller.release();
+                    controller().release();
                 });
 
                 el().parentNode.removeChild(el());
+                active(false);
             }
 
             const controller_options = observable({ 
@@ -126,18 +143,22 @@
                 }
             }
 
+            const append_subcontroller = (tag, controller) => {
+                if(controller.active === undefined) {
+                    el().querySelector(tag)
+                        .appendChild(controller.el);
+                }else if(controller.active()) {
+                    el().querySelector(tag)
+                        .appendChild(controller.el());
+                } else {
+                    el().querySelector(tag)
+                        .appendChild(controller.inject());
+                }
+            }
+
             const append_subcontrollers = () => {
                 sub_controllers().forEach(({ tag, controller }) => {
-                    if(controller.active === undefined) {
-                        el().querySelector(tag)
-                            .appendChild(controller.el);
-                    }else if(controller.active()) {
-                        el().querySelector(tag)
-                            .appendChild(controller.el());
-                    } else {
-                        el().querySelector(tag)
-                            .appendChild(controller.inject());
-                    }
+                    append_subcontroller(tag, controller());
                 })
             }
 
