@@ -1,6 +1,8 @@
 
 const MySub = Composer.FnController(({ props, data }) => {
-    data(props)
+    data({
+        ...props
+    })
     return `
         <h2>nested observable text: {title}</h2>
     `
@@ -8,8 +10,12 @@ const MySub = Composer.FnController(({ props, data }) => {
 const Main = Composer.FnController(({ sub, event, data }) => {
 
     const text = observable('');
-    const kek = observable('kek');
     const model = new Composer.Model();
+
+    data({
+        model,
+        text,
+    })
 
     sub('div', MySub({
         props: {
@@ -17,12 +23,6 @@ const Main = Composer.FnController(({ sub, event, data }) => {
             model
         }
     }));
-
-    data({
-        model,
-        text,
-        kek
-    })
 
     event('keyup input', e => {
         text(e.target.value);
@@ -41,9 +41,6 @@ const Main = Composer.FnController(({ sub, event, data }) => {
         </div>
         <h2>
             model text: { model.goose.value }
-        </h2>
-        <h2>
-            { kek }
         </h2>
     `
 });
