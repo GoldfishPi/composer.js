@@ -7,7 +7,6 @@ const ListItem = Composer.FnController(({ props, element, setup, tag, event }) =
 
     setup(() => {
         el_title().innerHTML = title();
-        console.log('title', title());
     });
 
     event('click .delete', props.on_delete);
@@ -20,7 +19,7 @@ const ListItem = Composer.FnController(({ props, element, setup, tag, event }) =
     `
 });
 
-const ListMain = Composer.FnController(({ event, element, sub, subscribe }) => {
+const ListMain = Composer.FnController(({ event, element, sub, subscribe, setup, el }) => {
     const items = observable([]);
     const sub_controllers = observable([]);
 
@@ -65,6 +64,11 @@ const ListMain = Composer.FnController(({ event, element, sub, subscribe }) => {
 
     subscribe(items, values => {
         el_array().innerHTML = values.map(v => v()).toString();
+    })
+
+    setup(() => {
+        console.log('we have an el???', el());
+        console.log('what about the other els',el_text());
     })
 
     return `

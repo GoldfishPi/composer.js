@@ -119,6 +119,6 @@ const Main = Composer.FnController(({ sub, event, release, setup, element }) => 
 window.addEventListener('DOMContentLoaded', () => {
     console.log('starting lol');
     ListMain({ inject:'#app' });
-    new ListController({ inject:'#app' })
+    // new ListController({ inject:'#app' })
 })
 

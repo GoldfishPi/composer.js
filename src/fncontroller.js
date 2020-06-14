@@ -29,6 +29,8 @@
 
             const id = observable(Composer.cid());
 
+            const dom_diff = observable('');
+
             /* -- Logic for adding a sub-controller 
              * if the sub-controller already exists replace it.
              * if this is a sub-controller being added on the fly inject it 
@@ -134,6 +136,20 @@
                 }
             }
 
+            const render_xdom = (cb) => {
+
+                const el_to = document.createElement(tag());
+
+                el_to.innerHTML = dom_diff();
+
+                const diff = Composer.xdom.diff(el(), el_to);
+
+                Composer.frame(() => {
+                    Composer.xdom.patch(el(), diff);
+                    cb();
+                })
+            }
+
             const inject = (inject_tag) => {
 
                 // -- init
@@ -161,29 +177,36 @@
 
                 el(document.createElement(tag()))
 
-                el().innerHTML = html;
+                // el().innerHTML = html;
+                
+                dom_diff(html);
 
-                // -- bind events
-                element_events().forEach(({ tag, cb }) => {
-                    const match = tag.match(/^(\w+)\s*(.*)$/);
-                    const evname = match[1].trim();
-                    const selector = match[2].trim();
-                    Composer.add_event(el(), evname, cb, selector);
-                })
+                render_xdom(() => {
 
-                elements().forEach(({ tag, element }) => {
-                    element(Composer.find(el(), tag));
+                    // -- bind events
+                    element_events().forEach(({ tag, cb }) => {
+                        const match = tag.match(/^(\w+)\s*(.*)$/);
+                        const evname = match[1].trim();
+                        const selector = match[2].trim();
+                        Composer.add_event(el(), evname, cb, selector);
+                    })
+
+                    elements().forEach(({ tag, element }) => {
+                        element(Composer.find(el(), tag));
+                    });
+
+                    // -- add sub controllers
+                    sub_controllers().forEach(({ tag, controller }) => {
+                        if(controller()) append_subcontroller(tag, controller());
+                    });
+
+                    const element = Composer.find(document, inject_tag);
+                    if(element) element.appendChild(el());
+                    active(true);
+                    setup_fn()();
+
                 });
 
-                // -- add sub controllers
-                sub_controllers().forEach(({ tag, controller }) => {
-                    if(controller()) append_subcontroller(tag, controller());
-                });
-
-                const element = Composer.find(document, inject_tag);
-                if(element) element.appendChild(el());
-                active(true);
-                setup_fn()();
                 return el();
             }
 
