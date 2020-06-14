@@ -147,8 +147,6 @@
 
                 const html = observable(dom_diff());
 
-                console.log('start html render')
-
                 const replace_item = (key, value) => {
                     const regex = new RegExp(`{\\s*${key}.*\\s*}`, 'g');
                     return html().replace(regex, item => {
