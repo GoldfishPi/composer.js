@@ -31,6 +31,8 @@
 
             const dom_diff = observable('');
 
+            const bound_data = observable({});
+
             /* -- Logic for adding a sub-controller 
              * if the sub-controller already exists replace it.
              * if this is a sub-controller being added on the fly inject it 
@@ -76,6 +78,9 @@
                 ...observable_subscriptions(),
                 { observable, index:observable.subscribe(cb), cb }
             ]);
+            const bind_data = observables => {
+                bound_data(observables);
+            }
             // -- End Event Binding Helpers
 
             const make_element_reffrence = (tag) => {
@@ -136,21 +141,52 @@
                 }
             }
 
-            const render_xdom = (cb) => {
+            const render_xdom = (key, value) => {
 
                 const el_to = document.createElement(tag());
 
-                el_to.innerHTML = dom_diff();
+                const html = observable(dom_diff());
 
-                const diff = Composer.xdom.diff(el(), el_to);
+                if(key) {
+                    const regex = new RegExp(`{\\s*${key}\\s*}`, 'g');
+                    const new_html = html().replace(regex, value);
+                    html(new_html);
+                } else {
+                    for(let key in bound_data()) {
+                        const regex = new RegExp(`{\\s*${key}\\s*}`, 'g');
+                        const new_html = html().replace(regex, bound_data()[key]());
+                        html(new_html);
+                    }
+                }
+
+                el_to.innerHTML = html();
+
+                const options = {
+                    children_only:true,
+                    ignore_elements:sub_controllers()
+                        .map(({ controller }) => controller().el() )
+                }
 
                 Composer.frame(() => {
-                    Composer.xdom.patch(el(), diff);
-                    cb();
+                    Composer.xdom.patch(el(), [ el(), el_to ], options);
+
+                    // -- set elements
+                    elements().forEach(({ tag, element }) => {
+                        element(Composer.find(el(), tag));
+                    });
+
+                    // -- add sub controllers
+                    sub_controllers().forEach(({ tag, controller }) => {
+                        if(controller()) append_subcontroller(tag, controller());
+                    });
+
+                    active(true);
+                    setup_fn()();
+
                 })
             }
 
-            const inject = (inject_tag) => {
+            const inject = inject_tag => {
 
                 // -- init
                 const html = controller({
@@ -163,6 +199,7 @@
                     event: bind_element_event, 
                     with_bind: bind_composer_event,
                     subscribe: bind_observable,
+                    data: bind_data,
 
                     setup: fn => setup_fn(fn),
                     release,
@@ -178,34 +215,28 @@
                 el(document.createElement(tag()))
 
                 // el().innerHTML = html;
-                
+
                 dom_diff(html);
 
-                render_xdom(() => {
+                // -- bind events
+                element_events().forEach(({ tag, cb }) => {
+                    const match = tag.match(/^(\w+)\s*(.*)$/);
+                    const evname = match[1].trim();
+                    const selector = match[2].trim();
+                    Composer.add_event(el(), evname, cb, selector);
+                })
 
-                    // -- bind events
-                    element_events().forEach(({ tag, cb }) => {
-                        const match = tag.match(/^(\w+)\s*(.*)$/);
-                        const evname = match[1].trim();
-                        const selector = match[2].trim();
-                        Composer.add_event(el(), evname, cb, selector);
-                    })
 
-                    elements().forEach(({ tag, element }) => {
-                        element(Composer.find(el(), tag));
+                for(let key in bound_data()) {
+                    bind_observable(bound_data()[key], value => {
+                        render_xdom(key, value);
                     });
+                }
 
-                    // -- add sub controllers
-                    sub_controllers().forEach(({ tag, controller }) => {
-                        if(controller()) append_subcontroller(tag, controller());
-                    });
+                const element = Composer.find(document, inject_tag);
+                if(element) element.appendChild(el());
 
-                    const element = Composer.find(document, inject_tag);
-                    if(element) element.appendChild(el());
-                    active(true);
-                    setup_fn()();
-
-                });
+                render_xdom();
 
                 return el();
             }
