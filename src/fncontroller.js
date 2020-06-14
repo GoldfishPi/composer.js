@@ -141,21 +141,41 @@
                 }
             }
 
-            const render_xdom = (key, value) => {
+            const render_xdom = () => {
 
                 const el_to = document.createElement(tag());
 
                 const html = observable(dom_diff());
 
-                if(key) {
-                    const regex = new RegExp(`{\\s*${key}\\s*}`, 'g');
-                    const new_html = html().replace(regex, value);
-                    html(new_html);
-                } else {
-                    for(let key in bound_data()) {
-                        const regex = new RegExp(`{\\s*${key}\\s*}`, 'g');
-                        const new_html = html().replace(regex, bound_data()[key]());
-                        html(new_html);
+                console.log('start html render')
+
+                const replace_item = (key, value) => {
+                    const regex = new RegExp(`{\\s*${key}.*\\s*}`, 'g');
+                    return html().replace(regex, item => {
+                        if(item.includes('.')) {
+                            let res = value.toJSON ? value.toJSON() : value;
+                            item
+                                .replace( '}','')
+                                .replace('{', '')
+                                .replace(/\s/g, '')
+                                .split('.')
+                                .slice(1)
+                                .forEach(item => {
+                                    if(!res)return;
+                                    res = res[item];
+                                })
+                            return res || '';
+                        }
+                        return value;
+                    });
+                }
+
+                for(let key in bound_data()) {
+                    const item = bound_data()[key];
+                    if(item.subscribe) {
+                        html(replace_item(key, item()));
+                    } else {
+                        html(replace_item(key, item))
                     }
                 }
 
@@ -228,9 +248,16 @@
 
 
                 for(let key in bound_data()) {
-                    bind_observable(bound_data()[key], value => {
-                        render_xdom(key, value);
-                    });
+                    const item = bound_data()[key];
+                    if(item.subscribe) {
+                        bind_observable(item, () => {
+                            render_xdom();
+                        });
+                    } else {
+                        bind_composer_event(item, 'change', () => {
+                            render_xdom()
+                        });
+                    }
                 }
 
                 const element = Composer.find(document, inject_tag);
