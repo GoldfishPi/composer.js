@@ -26,6 +26,7 @@
             const observable_subscriptions = observable([]);
             const element_events = observable([]);
             const composer_events = observable([]);
+            const ref_events = observable({});
 
             const id = observable(Composer.cid());
 
@@ -81,9 +82,14 @@
 
             const create_data_refs = args => {
                 let observables = {};
+                let events = {};
                 for(let key in args) {
-                    observables[key] = observable(args[key]);
+                    if(typeof args[key] === 'function')
+                        events[key] = args[key];
+                    else 
+                        observables[key] = observable(args[key]);
                 }
+                ref_events(events);
                 bound_data(observables);
                 return observables;
             }
@@ -153,6 +159,8 @@
 
                 const html = observable(dom_diff());
 
+                let bound_events = [];
+
                 const replace_item = (key, value) => {
                     const regex = new RegExp(`{\\s*${key}.*\\s*}`, 'g');
                     return html().replace(regex, item => {
@@ -183,7 +191,23 @@
                     }
                 }
 
+                html(html().replace(/@[a-z]*=".*"/g, str => {
+                    const id = Composer.cid();
+                    bound_events.push([id, str]);
+                    return id;
+                }))
+
                 el_to.innerHTML = html();
+
+                bound_events.forEach(([ id, str ]) => {
+                    var els = el_to.querySelectorAll(`[${id}]`);
+                    var [ event_name ] = str.match(/[^@]*(?=\=)/);
+                    const function_key = str.match(/".*"/)[0].replace(/"/g, '');
+                    for(var el of els) {
+                        el.removeEventListener(event_name, ref_events()[function_key]);
+                        el.addEventListener(event_name, ref_events()[function_key]);
+                    }
+                });
 
                 const options = {
                     children_only:true,
