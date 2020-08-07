@@ -78,8 +78,14 @@
                 ...observable_subscriptions(),
                 { observable, index:observable.subscribe(cb), cb }
             ]);
-            const bind_data = observables => {
+
+            const create_data_refs = args => {
+                let observables = {};
+                for(let key in args) {
+                    observables[key] = observable(args[key]);
+                }
                 bound_data(observables);
+                return observables;
             }
             // -- End Event Binding Helpers
 
@@ -217,7 +223,7 @@
                     event: bind_element_event, 
                     with_bind: bind_composer_event,
                     subscribe: bind_observable,
-                    data: bind_data,
+                    data: create_data_refs,
 
                     setup: fn => setup_fn(fn),
                     release,
