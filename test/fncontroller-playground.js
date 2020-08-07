@@ -17,11 +17,7 @@ const Main = Composer.FnController(({ dom, data }) => {
         count:0,
 
         on_text:e => text(e.target.value),
-        on_click: () => {
-            count(count() + 1)
-            console.log('count')
-        },
-        
+        on_click: () => count(count() + 1)
     });
 
     return `
