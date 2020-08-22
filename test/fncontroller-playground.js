@@ -7,7 +7,7 @@ const MySub = Composer.FnController(({ props, data }) => {
         <h2>nested observable text: {title}</h2>
     `
 });
-const Main = Composer.FnController(({ data }) => {
+const Main = Composer.FnController(({ data, sub }) => {
 
     // const text = observable('');
     const model = new Composer.Model({
@@ -24,20 +24,22 @@ const Main = Composer.FnController(({ data }) => {
 
         methods: {
             on_text:e => text(e.target.value),
+            on_click:() => {
+
+                count(count() + 1);
+                model.set({
+                    count:model.get('count') + 1
+                })
+            },
+        },
+        controllers: {
+            MySub
         }
     });
 
-    const on_click = () => {
-
-        count(count() + 1);
-        model.set({
-            count:model.get('count') + 1
-        })
-    }
-
-    data({ methods: {
-        on_click
-    } });
+    // sub('.sub', MySub({
+    //     title:'wow'
+    // }));
 
     return `
         <button @click="on_click">click me</button>
@@ -53,6 +55,8 @@ const Main = Composer.FnController(({ data }) => {
         <h3>
         count: { count }
         </h3>
+        <h2>My Sub Controller</h2>
+        <MySub/>
     `
 });
 

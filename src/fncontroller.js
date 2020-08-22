@@ -17,6 +17,7 @@
             // -- controller set item refs
             const elements = observable([]);
             const sub_controllers = observable([]);
+            const ref_controllers = observable({});
 
             // -- setup function set by controller
             const setup_fn = observable(() => {});
@@ -83,6 +84,7 @@
             const create_data_refs = ({ 
                 methods = {},
                 bind = {},
+                controllers = {},
                 ...args 
             }) => {
                 let observables = {
@@ -106,6 +108,10 @@
 
                 ref_events(events);
                 bound_data(observables);
+                ref_controllers({
+                    ...ref_controllers(),
+                    ...controllers
+                });
                 return observables;
             }
             // -- End Event Binding Helpers
@@ -176,7 +182,7 @@
 
                 let bound_events = [];
 
-                const replace_item = (key, value) => {
+                const replace_event = (key, value) => {
                     const regex = new RegExp(`{\\s*${key}.*\\s*}`, 'g');
                     return html().replace(regex, item => {
                         if(item.includes('.')) {
@@ -197,13 +203,27 @@
                     });
                 }
 
+                const replace_controller = (key, item) => {
+                    const regex = new RegExp(`<${key}/>`, 'g')
+                    return html().replace(regex, () => {
+                        const id = Composer.cid();
+                        add_subcontroller(`[cid=${id}]`, item({
+                        }));
+                        return `<div cid="${id}">${id}</div>`
+                    });
+                }
+
                 for(let key in bound_data()) {
                     const item = bound_data()[key];
                     if(item.subscribe) {
-                        html(replace_item(key, item()));
+                        html(replace_event(key, item()));
                     } else {
-                        html(replace_item(key, item))
+                        html(replace_event(key, item))
                     }
+                }
+
+                for(let key in ref_controllers()) {
+                    html(replace_controller(key, ref_controllers()[key]));
                 }
 
                 html(html().replace(/@[a-z]*=".*"/g, str => {
