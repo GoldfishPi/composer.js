@@ -24,14 +24,20 @@ const Main = Composer.FnController(({ data }) => {
 
         methods: {
             on_text:e => text(e.target.value),
-            on_click: () => {
-                count(count() + 1);
-                model.set({
-                    count:model.get('count') + 1
-                })
-            }
         }
     });
+
+    const on_click = () => {
+
+        count(count() + 1);
+        model.set({
+            count:model.get('count') + 1
+        })
+    }
+
+    data({ methods: {
+        on_click
+    } });
 
     return `
         <button @click="on_click">click me</button>

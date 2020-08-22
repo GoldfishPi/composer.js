@@ -85,8 +85,12 @@
                 bind = {},
                 ...args 
             }) => {
-                let observables = {};
-                let events = {};
+                let observables = {
+                    ...bound_data()
+                };
+                let events = {
+                    ...ref_events()
+                };
 
                 for(let key in args) {
                     observables[key] = observable(args[key]);
