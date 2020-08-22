@@ -80,15 +80,26 @@
                 { observable, index:observable.subscribe(cb), cb }
             ]);
 
-            const create_data_refs = args => {
+            const create_data_refs = ({ 
+                methods = {},
+                bind = {},
+                ...args 
+            }) => {
                 let observables = {};
                 let events = {};
+
                 for(let key in args) {
-                    if(typeof args[key] === 'function')
-                        events[key] = args[key];
-                    else 
-                        observables[key] = observable(args[key]);
+                    observables[key] = observable(args[key]);
                 }
+
+                for(let key in methods) {
+                    events[key] = methods[key];
+                }
+
+                for(let key in bind) {
+                    observables[key] = bind[key];
+                }
+
                 ref_events(events);
                 bound_data(observables);
                 return observables;

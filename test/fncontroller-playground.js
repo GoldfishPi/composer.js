@@ -7,17 +7,30 @@ const MySub = Composer.FnController(({ props, data }) => {
         <h2>nested observable text: {title}</h2>
     `
 });
-const Main = Composer.FnController(({ dom, data }) => {
+const Main = Composer.FnController(({ data }) => {
 
     // const text = observable('');
-    const model = new Composer.Model();
+    const model = new Composer.Model({
+        count:0
+    });
 
     const { text, count } = data({
         text:'',
         count:0,
 
-        on_text:e => text(e.target.value),
-        on_click: () => count(count() + 1)
+        bind: {
+            model,
+        },
+
+        methods: {
+            on_text:e => text(e.target.value),
+            on_click: () => {
+                count(count() + 1);
+                model.set({
+                    count:model.get('count') + 1
+                })
+            }
+        }
     });
 
     return `
@@ -26,7 +39,7 @@ const Main = Composer.FnController(({ dom, data }) => {
             <input placeholder="my text" value="{ text }" @keyup="on_text">
         </div>
         <h2>
-            model text: { model.goose.value }
+            model text: { model.count }
         </h2>
         <h2>
             observable text: { text }
